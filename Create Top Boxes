@@ -1,468 +1,885 @@
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
-' Create Top Boxes
-' Written By: 	Kristin Carter
-' Description: 	This script reads in a .sav file and creates metadata (shell) for Top & Top 2 Box summary variables. 
-'				It outputs a .MDD file and a .txt file that includes code to run in the Create MDD DMS script.
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
+Dim Project, TableDoc, Sample[], Cntry[], CStart, CEnd, SampStart, SampEnd, C, S, AxisTop, AxisSide, DDF_FILE, MDD_FILE, EXPORT_FILE, BoxListNum, Screener, Client, TypeofProject
 
-'Change the Project Name and Path for Each Study
-#define Project "Insidious 4"
+'*******************************************'
+'	Define Path	& Project					'
+'*******************************************'
 #define myPath "K:\Insidious Chapter 4\MC Profile\"
-		
+Project  = "Insidious 4"
+TypeofProject = "MC Profile"
 
-'Declare Variables
-Dim TableDoc
-Dim MDM, fso, txtfile, f, fso2, fixbases
-Dim DSC, DSCs
-Dim Samp, k, C, Terr
+'*******************************************'
+'	Define Samples & Countries				'
+'*******************************************'
 
-'For Loop: Loop through countries (If Only 1 country, say for C = 1 to 1)
-for C = 1 to 1
+Sample[1] = "General"
+Sample[2] = "Tableau"
+Sample[3] = "Client"
 
-	'For Loop: Loop	through samples (If Only 1 sample, say for k = 1 to 1)
-	for k = 1 to 1
+Cntry[0] = "US"
+Cntry[1] = "US"
+Cntry[2] = "US - Indicies"
+'Cntry[3] = "FR"
+'Cntry[4] = "DE"
+'Cntry[5] = "ES"
+'Cntry[6] = "MX"
+'Cntry[7] = "BR"
+'Cntry[8] = "RU"
+'Cntry[9] = "CN"
+'Cntry[10] = "JP"
+'Cntry[11] = "KR"
+'Cntry[12] = "HK"
 
-		'Assign Samp Values
-		if k = 1 then Samp = "Gen"
-		if k = 2 then Samp = "Kids"		
-		
-		'Assign Terr Values
-		if C = 1 then Terr = "US"
-		if C = 2 then Terr = "US Screener"
+Screener = 0
 
+
+'*******************************************'
+'	Country Numbers to Run					'
+'*******************************************'
+CStart   = 2
+CEnd	 = 2
+
+For C = CStart to CEnd
+
+	'*******************************************'
+	'	Sample Numbers to Run					'
+	'*******************************************'
+
+	SampStart   = 1
+	SampEnd	    = 1
+	
+	For S = SampStart to SampEnd
+	
+		'*******************************************'
+		'	Read in Data							'
+		'*******************************************'
 		
-		
-		'Create the Text File that will have Code for Creating Top Box Variables in the DMS
-		Set fso = CreateObject("Scripting.FileSystemObject")
-		Set txtfile = fso.CreateTextFile("On Next Case " + Samp + ".txt" , True, True)		
-		
-		'This creates a text file with syntax to fix bases for summary variables
-		Set fso2 = CreateObject("Scripting.FileSystemObject")
-		Set fixbases = fso2.CreateTextFile("FixBases " + Samp + ".txt" , True, True)
-		
-		'The .SAV to Read in - Will need to make sure Filename Matches exactly (i.e. Big Hero 6 Recoded UK GenPar.sav)
-		#define INPUTSAV myPath + "Data\" + Project + " " + Samp + " " + Terr +  ".sav"
-		
-		'The Output MDD files
-		#define OUTPUTMDD myPath + "Tabs\Tab Prep\" + Project + " " + Samp + " " + Terr +  ".mdd"		
-		
-		'A Temp file that gets deleted
-		#define TEMPMDD myPath + "Tabs\Tab Prep\DataTemp" + Samp + ".mdd"
-		
-		'This Chunk of code just Reads the .SAV and saves it as an MDD
-		if fso.FileExists (OUTPUTMDD) Then fso.DeleteFile(OUTPUTMDD)
-		Set DSCs = CreateObject("MRDSCReg.Components")
-		Set DSC = DSCs["mrSavDsc"]
-		Set MDM = DSC.Metadata.Open(INPUTSAV)
-		MDM.Save(OUTPUTMDD)
-		MDM.Close()	
-			
-		' Create a new Document object
 		Set TableDoc = CreateObject("TOM.Document")
 		
-		' Load the dataset
-		With TableDoc.DataSet
-		     .Load(OUTPUTMDD, , INPUTSAV, "mrSavDsc",)
-		    .View = 1 ' HDATA
+		if Screener = 0 then DDF_FILE = myPath + "Tabs\Tab Prep\Data1 " + Cntry[1] + ".ddf"
+		if Screener = 0 then MDD_FILE = myPath + "Tabs\Tab Prep\Data1 " + Cntry[1] + ".mdd"
+		
+		if Screener = 1 then DDF_FILE = myPath + "Tabs\Tab Prep\Data1 " + Cntry[1] + " Screener.ddf"
+		if Screener = 1 then MDD_FILE = myPath + "Tabs\Tab Prep\Data1 " + Cntry[1] + " Screener.mdd"
+		
+'		if S = 3 then DDF_FILE = myPath + "Tabs\Tab Prep\Data1K " + Cntry[1] + ".ddf"
+'		if S = 3 then MDD_FILE = myPath + "Tabs\Tab Prep\Data1K " + Cntry[1] + ".mdd"	
+		
+		TableDoc.DataSet.Load(MDD_FILE, , DDF_FILE, "mrDataFileDsc")	
+		
+		'*******************************************'
+		'	Global Table Properties					'
+		'*******************************************'
+		
+		TableDoc.Default.CellItems.Clear()
+		if C <> 2 then TableDoc.Default.CellItems.AddNew(&H0001,2)
+		if C = 2 then TableDoc.Default.CellItems.AddNew(22)
+		TableDoc.Default.Properties["AutoUnweightedBases"] = False
+		TableDoc.Default.Annotations.ClearAll()
+		
+		If Screener = 0 then
+		TableDoc.Global.Clear()
+		With TableDoc.Global      
+		   .Annotations[0].Specification = Project + " " + TypeofProject + " Study (" + Sample[S] + " Sample) - " + Cntry[C]
+		   .Annotations[1].Specification = "{TableDescription \n}"
+		   .Annotations[3].Specification = "Table: {TableNumber}"
+		   .Annotations[5].Specification = "{WeightVariable \n\p}{Filters \n\p}{SortColumn \n\p}{Statistics }"
 		End With
-			
-		'Makes the Data Read-Write instead of Read Only	
-		Set f = fso.GetFile(OUTPUTMDD)
-		If f.Attributes.BitAnd(1) Then
-		    f.Attributes = f.Attributes - 1
 		End If
 		
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'		
-		'Each NewGrid() line creates a grid that will later be used to create the Summary Variables (Top Box Variables)
-		'You need to Change the Variable Name, Top of Grid Label, and Side of Grid Label
-		'The Top & Side Labels aren't as important as the Variable Name if you are not showing the actual Grid in the tabs
-		'You need a grid for either scaled statement questions, or Multiple Response Descriptions asked by Brand
-		'The number of variables is automatically read based on the variable name, so you need to be sure they are named correctly in the SAV data
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'			
+		If Screener = 1 then
+		TableDoc.Global.Clear()
+		With TableDoc.Global      
+		   .Annotations[0].Specification = Project + " " + TypeofProject + " Study (" + Sample[S] + " Screener) - " + Cntry[C]
+		   .Annotations[1].Specification = "{TableDescription \n}"
+		   .Annotations[3].Specification = "Table: {TableNumber}"
+		   .Annotations[5].Specification = "{WeightVariable \n\p}{Filters \n\p}{SortColumn \n\p}{Statistics }"
+		End With
+		End If
 		
-		'TableDoc.DataSet.Variables.AddNewGrid("CrackleF1,CrackleF2,CrackleF3,CrackleF4,CrackleF5,CrackleF6,CrackleF7,HuluF1,HuluF2,HuluF3,HuluF4,HuluF5,AmazonF1,AmazonF2,AmazonF3,AmazonF4,AmazonF5,AmazonF6,AmazonF7,NetflixF1,NetflixF2,NetflixF3,NetflixF4,NetflixF5,NetflixF6,NetflixF7,NetflixF8,NetflixF9,NetflixF10,NetflixF11,NetflixF12,NetflixF13,NetflixF14,NetflixF15", "ShowFit", "Show", "How well do you think this fits with...?")
+		'----------------------------
+		'Global Filters				'
+		'----------------------------
 		
-		
-		'All Samples Completes & Screener
+'		If Sample[S] = "General" then TableDoc.Global.Filters.AddNew("Sample", "Sample_Type.ContainsAny({General})")
+'		If Sample[S] = "Parent" then TableDoc.Global.Filters.AddNew("Sample", "Sample_Type.ContainsAny({Parent})")
 
+'		if Cntry[C] = "US" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({United_States})")
+'		if Cntry[C] = "UK" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({United_Kingdom})")
+'		if Cntry[C] = "FR" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({France})")
+'		if Cntry[C] = "DE" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({Germany})")
+'		if Cntry[C] = "ES" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({Spain})")
+'		if Cntry[C] = "MX" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({Mexico})")
+'		if Cntry[C] = "BR" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({Brazil})")
+'		if Cntry[C] = "RU" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({Russia})")
+'		if Cntry[C] = "CN" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({China})")
+'		if Cntry[C] = "JP" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({Japan})")
+'		if Cntry[C] = "KR" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({South_Korea})")
+'		if Cntry[C] = "HK" then TableDoc.Global.Filters.AddNew("Terr", "TerrCheck.ContainsAny({Hong_Kong})")		
+		
+		'*******************************************'
+		'	Create Banner(s)						'
+		'*******************************************'
+		
+		Set AxisTop = TableDoc.Axes.AddNew("TopBanner") 
+		Set AxisSide = TableDoc.Axes.AddNew("SideBanner")
+		
+		'---------------
+		'Top Banner
+		'---------------
+		
+
+		if Screener = 0 then AxisTop.Specification = "Overall + Post1 + QCL_2 + QCL_5 + GenderG + Age2 + Agegenban + Age4 + GenAge + Race1 + RaceD + MovGen + Place + MarStatBan + RegionBan + TheatView + TheatViewInsid + Franchise + Education"
+		if Screener = 1 then AxisTop.Specification = "Overall + GenderG + Age2 + Agegenban + + Age4 + GenAge + Race1 + RegionBan + Education + QCL_2 + QCL_5"
 			
-		'All Samples, Completes Only
+		Dim Banner2
+		
+		if  C = 1 AND S <> 2 then Banner2 =  "Overall + Post1 + QCL_2 + QCL_5"
+		if  C = 2 AND S <> 2 then Banner2 =  "Post1 + QCL_2 + QCL_5"
+		if  C = 1 AND S = 2 then Banner2 =  "Overall + Post1{base() [isHidden = TRUE], Definite} + QCL_2 + QCL_5"
+		if  C = 2 AND S = 2 then Banner2 =  "Post1{base() [isHidden = TRUE], Definite} + QCL_2 + QCL_5" 
+	
+		Dim Banner6		
+	    If  C = 1 then Banner6 =  "Overall + Post1 + QCL_2 + QCL_5 + ShareBeh + RaceD + MovActBanD"
+		If  C = 2 then Banner6 =  "Post1 + QCL_2 + QCL_5 + ShareBeh + RaceD + MovActBanD"		
 			
-		if C = 1 then
-	
-			NewGrid(TableDoc, fixbases, "ViewCab", 		"Grid Top", "Grid Side")
-			NewGrid(TableDoc, fixbases, "SocialVisit", 	"Grid Top", "Grid Side")
-			NewGrid(TableDoc, fixbases, "ShowHowWatch", "Show", 	"Which of the following best reflects how you watch each of the following shows?")
-			NewGrid(TableDoc, fixbases, "Seen", 		"Grid Top", "Grid Side")
-			NewGrid(TableDoc, fixbases, "FranFan", 		"Grid Top", "Grid Side")
-
-		end if
+		Dim Banner7		
+		if  C = 1 then Banner7 =  "Overall + Post1 + QCL_2 + QCL_5 + RaceD + MovActBanD"
+		if  C = 2 then Banner7 =  "Post1 + QCL_2 + QCL_5 + RaceD + MovActBanD"
 		
-		
-		'GenPar Completes & Screener
-		if k = 1 then
-
-		end if
-		
-		'GenPar Completes Only
-		if C = 1 and K = 1 then				
-
-		end if
-		
-		'Kids Completes & Screener
-		if k = 2 then 			
-		
-		end if	
-		
-		'Saves and Closes the MDD
-		TableDoc.Dataset.MdmDocument.Save(TEMPMDD)
-		TableDoc.DataSet.MdmDocument.Close()
-		
-		'Opens MDD to Create the Top Box Shells
-		Set MDM = CreateObject("MDM.Document")		
-		MDM.Open(TEMPMDD)
-		
-	
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'		
-		'Each CreateTopBox() line creates a shell for the Summary Variable
-		'You need to change the Variable Name you are creating, and the type of variable (ie Top Box, or Top 2 Box, Bottom 2 Box
-		'The options are Top Box, Top 2 Box, Top 3 Box, By Box, Bottom 2 Box, Bottom 3 Box, Bottom Box
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'			
- 		 
- 		
-	'All Samples Completes & Screener	
-
-	 
-		 
-	'All Samples, Completes Only
-		if C = 1 then
-		
-			
-			CreateTopBox(MDM, txtfile, "ViewCab", 		"Top Box")
-			CreateTopBox(MDM, txtfile, "ViewCab", 		"Top 2 Box")
-			CreateTopBox(MDM, txtfile, "SocialVisit", 	"Top Box")
-			CreateTopBox(MDM, txtfile, "SocialVisit", 	"Top 2 Box")
-			CreateTopBox(MDM, txtfile, "SocialVisit", 	"Top 3 Box")
-			CreateTopBox(MDM, txtfile, "Seen", 			"Top Box")
-			CreateTopBox(MDM, txtfile, "Seen", 			"Top 2 Box")
-			CreateTopBox(MDM, txtfile, "FranFan",		"Top Box")
-			CreateTopBox(MDM, txtfile, "FranFan", 		"Top 2 Box")		
-			CreateTopBox(MDM, txtfile, "ShowHowWatch", 	"By Box")
-			 
-			 '(MDM, txtfile, Name, Label, Grid, Type, Box)
-			 
-		 
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'		
-		'If it's not a standard summary variable like Top Box, (i.e. box 3 & 4 of a 5-cat variable, you need to use this one
-		'You need to change the Variable Name you are creating, The label for the summary variable, and the box number(s) to summarize
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'
-'------------------------------------------------------------------------------------------------------------------------------'			 
-			 
-			 							 'Var Name      	'Var Name Appendix	'Label          					'Box Numbers to Summarize 
-'			 CreateCustBox(MDM, txtfile, "ElemRate",		"_B3B",				"%Good, Fair, Poor", 				{3, 4, 5})
-'			 CreateCustBox(MDM, txtfile, "MusicEnjoy",		"_B2B",				"%Did not like much or at all", 	{3, 4})
-'			 CreateCustBox(MDM, txtfile, "MusicGenEnjoy",	"_B2B",				"%Did not like much or at all", 	{3, 4})
-		
-			 
-			 
-'			 CreateTopBox_Old(MDM, txtfile, "ElemRate_B3B",			"%Good, Fair or Poor", 							"ElemRate", 	"Bot 2", 4)
-'			 CreateTopBox_Old(MDM, txtfile, "MusicEnjoy_B2B",		"%Did not like much or Did not like at all", 	"MusicEnjoy", 	"Bot 2", 3)
-'			 CreateTopBox_Old(MDM, txtfile, "MusicGenEnjoy_B2B",	"%Did not like much or Did not like at all", 	"MusicGenEnjoy","Bot 2", 3)
-	
-			 
-		end if
-		
-	'GenPar Completes & Screener
-		if k = 1 then
-			
-		
-		 	'GenPar Completes Only
-			if C = 1 then				
-			
-
-			end if				
-			
-		end if		
-		
-		'Kids Completes & Screener
-		if k = 2 then
-			'Kids Completes Only
-			if C = 1 then	
-			end if			
-		end if	
-		
-		txtfile.Close()
-		fixbases.Close()
-		MDM.Save(OUTPUTMDD)
-		MDM.Close()
-		
-		fso.DeleteFile(TEMPMDD)
-	next
-next
-
-Set MDM = CreateObject("MDM.Document")
-
-''' THESE ARE SUB ROUTINES THAT YOU DO NOT NEED TO CHANGE
-
-
-Sub CreateTopBox(MDM, txtfile, Name, Type)
-	Dim MyVariable, cat, cats, cnt, NameNew, Grid, ECount, LType, Label, elem
-	
-	Grid = Name
-	ECount = MDM.Fields[Grid].Fields["Column"].Categories.Count
-	
-	
-	Select Case Type
-	
-	
-		
-	Case "By Box"
-		cnt = 0
-		for each cat in MDM.Fields[Grid].Fields["Column"].Categories
-			if cnt = 0 then NameNew = Name + "_TB"
-			if cnt > 0 then NameNew = Name + "_" + makestring(cnt+1) + "B"
-			
-			Label = "%" + MDM.Fields[Grid].Fields["Column"].Categories[cnt].Label
-			
-			Set MyVariable = MDM.CreateVariable(NameNew, Label)
-		    MyVariable.MinValue = 1
-		    MyVariable.DataType = mr.Categorical
-			
-			For Each elem In MDM.Fields[Grid].Elements
-				MyVariable.Elements.Add(MDM.CreateElement(elem.Name, elem.Label))
-			Next
-			    
-			MDM.Fields.Add(MyVariable)
-			
-			txtfile.WriteLine("    ' " + Name)		
-			'cats = Left(cats,Len(cats)-1)	
-			txtfile.WriteLine("    CreateGridSummary(" + Grid + ", " + NameNew + ", {" + cat + "}, ""Column"")")	
-			txtfile.WriteLine("")
-			cnt = cnt + 1
-		next
-	
-	Case "Top Box"
-		NameNew = Name + "_TB"
-		Label = "%" + MDM.Fields[Grid].Fields["Column"].Categories[0].Label
-		cats = cats + MDM.Fields[Grid].Fields["Column"].Categories[0].Name + ","
-		
-	Case "Top 2 Box" 
-		NameNew = Name + "_T2B"
-		Label = "%" + MDM.Fields[Grid].Fields["Column"].Categories[0].Label + " or " +  MDM.Fields[Grid].Fields["Column"].Categories[1].Label
-		For cnt = 0 To 1
-			cats = cats + MDM.Fields[Grid].Fields["Column"].Categories[cnt].Name + ","
-		Next
-		
-	Case "Top 3 Box" 
-		NameNew = Name + "_T3B"
-		Label = "%" + MDM.Fields[Grid].Fields["Column"].Categories[0].Label + " or " +  MDM.Fields[Grid].Fields["Column"].Categories[1].Label + " or " +  MDM.Fields[Grid].Fields["Column"].Categories[2].Label
-		For cnt = 0 To 2
-			cats = cats + MDM.Fields[Grid].Fields["Column"].Categories[cnt].Name + ","
-		Next
-		
-	Case "Bottom 2 Box" 
-		NameNew = Name + "_B2B"		
-		Label = "%" + MDM.Fields[Grid].Fields["Column"].Categories[ECount-1].Label + " or " +  MDM.Fields[Grid].Fields["Column"].Categories[ECount-2].Label
-		For cnt = ECount - 2 To ECount - 1
-			cats = cats + MDM.Fields[Grid].Fields["Column"].Categories[cnt].Name + ","
-		Next
-		
-	Case "Bottom 3 Box" 
-		NameNew = Name + "_B3B"
-		Label = "%" + MDM.Fields[Grid].Fields["Column"].Categories[ECount-1].Label + ", " +  MDM.Fields[Grid].Fields["Column"].Categories[ECount-2].Label+ " or " +  MDM.Fields[Grid].Fields["Column"].Categories[ECount-3].Label
-		For cnt = ECount - 3 To ECount - 1
-			cats = cats + MDM.Fields[Grid].Fields["Column"].Categories[cnt].Name + ","
-		Next
-		
-	Case "Bottom Box" 
-		NameNew = Name + "_BB"
-		Label = "%" + MDM.Fields[Grid].Fields["Column"].Categories[ECount-1].Label
-		cats = cats + MDM.Fields[Grid].Fields["Column"].Categories[ECount-1].Name + ","
-	
-	End Select
-	
-	if Type <> "By Box" then
-		
-		Set MyVariable = MDM.CreateVariable(NameNew, Label)
-	    MyVariable.MinValue = 1
-	    MyVariable.DataType = mr.Categorical
-		
-		For Each cat In MDM.Fields[Grid].Elements
-			MyVariable.Elements.Add(MDM.CreateElement(cat.Name, cat.Label))
-		Next
-		    
-		MDM.Fields.Add(MyVariable)
-		
-		txtfile.WriteLine("    ' " + Name)		
-		cats = Left(cats,Len(cats)-1)	
-		txtfile.WriteLine("    CreateGridSummary(" + Grid + ", " + NameNew + ", {" + cats + "}, ""Column"")")	
-		txtfile.WriteLine("")
-		
-	end If	
-
-End Sub
-
-
-' CreateCustBox(MDM, txtfile, "ElemRate",		"_B3B"				"Bottom 3 Box", 	"3, 4, 5")
-
-Sub CreateCustBox(MDM, txtfile, Name, Name2, NewLabel, BoxNums)
-	Dim MyVariable, cat, cats, cnt, NameNew, Grid, ECount, LType, Label, elem, SummaryBoxes, NumElem
-	
-	Grid = Name
-	NameNew = Name + Name2
-	'SummaryBoxes = split(BoxNums, ",")
-	NumElem=len(BoxNums)
 				
-	if NumElem = 1 then 
-		Label = "%" + MDM.Fields[Grid].Fields["Column"].Categories[BoxNums[0]-1].Label
-		cats = MDM.Fields[Grid].Fields["Column"].Categories[BoxNums[0]-1].Name
-	end if
-	
-	if NumElem > 1 then 
-		Label = "%" + MDM.Fields[Grid].Fields["Column"].Categories[BoxNums[0]-1].Label
-		cats = MDM.Fields[Grid].Fields["Column"].Categories[BoxNums[0]-1].Name
-		for cnt = BoxNums[1] to BoxNums[NumElem-1]
-			Label = Label + " or " + MDM.Fields[Grid].Fields["Column"].Categories[cnt-1].Label
-			cats = cats + "," + MDM.Fields[Grid].Fields["Column"].Categories[cnt-1].Name
-		next	
+		'-----------------------------------------
+		'Side Banner for Banner X Banner (Table1)
+		'-----------------------------------------
+
+		If C > 0 then 
+			AxisSide.Specification = AxisTop.Specification
+			AxisSide.SubAxes.Remove(0)			
+			AxisSide.Specification = "Overall2 +" + AxisSide.Specification
+		end if
 		
-	end if
+		
+		
+		'----------------------------
+		'Create Tables				'
+		'----------------------------
+		
+		
+		Dim i, Ttl[], Amg[], QRE[], Banner, var[], ListNum, SortCol, we, OEList[], WgtVar, GridBanner, Brands[]
 	
+		if C = 1 then SortCol = "first"
+		if C = 2 then SortCol = "Post1{Definite}"
+
+		WgtVar = "weightPostInt"	
+		
+		With TableDoc
+	
+'CLIENT TABS
+if s = 3 then
+Banner = "Axis(TopBanner)"
+
+QRE[1] = "ShowReg"
+Ttl[1] = "Regular Viewers"
+Var[1] = "ShowReg"
+Amg[1] = "All"
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, Sortcol, 0, "None")
+Ttl[1] = Ttl[1] + " Indices"	
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "Post1{Definite}", 0, "None")
+TableDoc.Tables[TableDoc.Tables.Count-1].CellItems.Clear()
+TableDoc.Tables[TableDoc.Tables.Count-1].CellItems.AddNew(22)
+
+QRE[1] = "ViewCab"
+Ttl[1] = "Networks Watched"
+Amg[1] = "All"
+Var[1] = "ViewCab_TB + ViewCab_T2B"
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, Sortcol, 0, "None")
+Ttl[1] = Ttl[1] + " Indices"			
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "Post1{Definite}", 0, "None")
+TableDoc.Tables[TableDoc.Tables.Count-1].CellItems.Clear()
+TableDoc.Tables[TableDoc.Tables.Count-1].CellItems.AddNew(22)
+
+QRE[1] = "MaxDiff"
+Ttl[1] = "MaxDiff Scores"
+Var[1] = "MaxDiff"
+Amg[1] = "All"
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")	
+
+QRE[1] = "Influencers"
+Ttl[1] = "Online Influencers"
+Amg[1] = "All"
+Var[1] = "Influencers"
+	'MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, SortCol, 0, "None")
+
+QRE[1] = "ViewSport"
+Ttl[1] = "Sports Watched"
+Var[1] = "ViewSport"
+Amg[1] = "All"
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, Sortcol, 0, "None")
+Ttl[1] = Ttl[1] + " Indices"			
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "Post1{Definite}", 0, "None")
+TableDoc.Tables[TableDoc.Tables.Count-1].CellItems.Clear()
+TableDoc.Tables[TableDoc.Tables.Count-1].CellItems.AddNew(22)
+
+QRE[1] = "ViewEvent"
+Ttl[1] = "Events Watched"
+Var[1] = "ViewEvent"
+Amg[1] = "All"
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, SortCol, 0, "None")
+Ttl[1] = Ttl[1] + " Indices"			
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "Post1{Definite}", 0, "None")
+TableDoc.Tables[TableDoc.Tables.Count-1].CellItems.Clear()
+TableDoc.Tables[TableDoc.Tables.Count-1].CellItems.AddNew(22)
+
+ListNum = 13
+QRE[1] = "SocialVisit"
+Ttl[1] = "Social Media Visitation"
+Amg[1] = "All"
+Var[1] = ListVars(QRE[1],ListNum)
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+Ttl[1] = "Social Platform Visitation (Top, Top 2 Box, Top 3 Box)"
+Var[1] = "SocialVisit_TB + SocialVisit_T2B + SocialVisit_T3B"
+Amg[1] = "All"
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, Sortcol, 0, "None")	
+
+QRE[1] = "FandangoA, FandangoB, PrimUse, VisitPre"
+Amg[1] = "Aware of Fandango/Uses Fandango/All"
+Ttl[1] = "Use of Fandango"
+Var[1] = RemCom(QRE[1])
+	'MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, SortCol, 0, "None")
+
+
+'ListNum = 184
+'
+'QRE[1] = "ShowHowWatch"
+'Ttl[1] = "How Watch Shows"
+'Var[1] = ListVars(QRE[1],ListNum)
+'Amg[1] = "Watches Regularly"
+'	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, SortCol, 0, "None")	
+'Ttl[2] = Ttl[1] + " (By Box)"
+'Var[1] = QRE[1] + "_TB" + " + " + QRE[1] + "_T2B" + " + " + QRE[1] + "_T3B"
+'	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[2], TableDoc, 1, "first", 0, "None")
+
+
+
+ListNum = 8
+QRE[1] = "Radio"
+Ttl[1] = "Internet Radio Stations"
+Amg[1] = "Users"
+Var[1] = ListVars(QRE[1],ListNum)
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+
+
+end if
+	
+	if s = 1 then
+	
+			Banner = "Axis(TopBanner)"
+			
+			Ttl[1] = "Banner"
+			QRE[1] = "Banner"
+			Amg[1] = "All"
+			Var[1] = "Axis(SideBanner)"
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+				
+			QRE[1] = "CableA"
+			Ttl[1] = "Cable Type In Home"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+'				
+'			ListNum = 6
+''			This is 6 not 8 because nobody had 7 or 8 kids, the highest number indicated by anybody was 6
+'				
+'			QRE[1] = "Kids, KidAgeG"
+'			Ttl[1] = "Kids"
+'			Amg[1] = "All"
+'			Var[1] = "Kids{base(), eMaximum 'Maximum' max(KIDS), eMinimum 'Minimum' min(KIDS), eMean 'Mean' mean(KIDS), eStdDev 'Standard Deviation' stddev(KIDS), _1To1 '1 - 1' expression('KIDS >= 1 AND KIDS <= 1'), _2To2 '2 - 2' expression('KIDS >= 2 AND KIDS <= 2'), _3To3 '3 - 3' expression('KIDS >= 3 AND KIDS <= 3'), _4To4 '4 - 4' expression('KIDS >= 4 AND KIDS <= 4'), _5To6 '5 - 6' expression('KIDS >= 5 AND KIDS <= 6')}" + " + " + ListVars("KidAgeG", ListNum)
+'				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+				
+			QRE[1] = "Avid1, Avid2"
+			Ttl[1] = "Movies Seen in a Theater"
+			Amg[1] = "All"
+			Var[1] = "Avid1{base(), 'Mean' mean(Avid1), 'Min' min(Avid1), 'Max' max(Avid1), 'Standard Deviation' stddev(Avid1), _1To2 '1 - 2' expression('Avid1 >= 1 AND Avid1 <= 2'), _3To5 '3 - 5' expression('Avid1 >= 3 AND Avid1 <= 5'), _6To7 '6 - 7' expression('Avid1 >= 6 AND Avid1 <= 7'), _8To10 '8 - 10' expression('Avid1 >= 8 AND Avid1 <= 10')} + Avid2{base(), 'Mean' mean(Avid2), 'Min' min(Avid2), 'Max' max(Avid2), 'Standard Deviation' stddev(Avid2), _3To10 '1 - 10' expression('Avid2 >= 3 AND Avid2 <= 10'), _11To20 '11 - 20' expression('Avid2 >= 11 AND Avid2 <= 20'), _21To30 '21 - 30' expression('Avid2 >= 21 AND Avid2 <= 30'), _31To35 '31 - 35' expression('Avid2 >= 31 AND Avid2 <= 35')}"
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+				
+'			ListNum = 5
+'				
+'			QRE[1] = "PastPart"
+'			Ttl[1] = "Online Survey Participation P1M"
+'			Amg[1] = "All"
+'			Var[1] = ListVars(QRE[1], ListNum)
+'				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+				
+			QRE[1] = "WatchTV, Primary, HoursWkA"
+			Ttl[1] = "TV Watching Habits"
+			Var[1] = "WatchTV + Primary + HoursWkA{base(), 'Mean' mean(HoursWkA), 'Min' min(HoursWkA), 'Max' max(HoursWkA), 'Standard Deviation' stddev(HoursWkA), _1To15 '1 - 15' expression('HoursWkA >= 1 AND HoursWkA <= 15'), _16To30 '16 - 30' expression('HoursWkA >= 16 AND HoursWkA <= 30'), _31To45 '31 - 45' expression('HoursWkA >= 31 AND HoursWkA <= 45'), _46To60 '46 - 60' expression('HoursWkA >= 46 AND HoursWkA <= 60'), _61To75 '61 - 75' expression('HoursWkA >= 61 AND HoursWkA <= 75'), _76To90 '76 - 90' expression('HoursWkA >= 76 AND HoursWkA <= 90'), _91To105 '91 - 105' expression('HoursWkA >= 91 AND HoursWkA <= 105'), _106To120 '106 - 120' expression('HoursWkA >= 106 AND HoursWkA <= 120'), _121To135 '121 - 135' expression('HoursWkA >= 121 AND HoursWkA <= 135'), _136To150 '136 - 150' expression('HoursWkA >= 136 AND HoursWkA <= 150')}"
+			Amg[1] = "All"
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+				
+			QRE[1] = "Stream"
+			Ttl[1] = "Streaming Service For TV Set"
+			Amg[1] = "Primarily Stream on TV"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+				
+			QRE[1] = "MovActions"
+			Ttl[1] = "How Find Out More About a Movie"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+				
+				
+	If Screener = 0 Then
+				
+			QRE[1] = "Discov"
+			Ttl[1] = "How Discover New Movies"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "First"
+			Ttl[1] = "Influences to Seeing a New Movie"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "Where"
+			Ttl[1] = "Where Watch Trailers"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "MoreInfo, ShareOften, Showtime"
+			Ttl[1] = "Following Up/Sharing Interest in Movies"
+			Amg[1] = "All"
+			Var[1] = RemCom(QRE[1])
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+
+			QRE[1] = "TicketA, TicketB"
+			Ttl[1] = "How Purchase Movie Tickets"
+			Amg[1] = "All"
+			Var[1] = RemCom(QRE[1])
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+'				
+'			QRE[1] = "TicketB"
+'			Ttl[1] = "Who Buys Movie Tickets"
+'			Amg[1] = "All"
+'			Var[1] = QRE[1]
+'				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+				
+			QRE[1] = "Aware"
+			Ttl[1] = "Service Awareness"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "FandangoA, FandangoB, PrimUse, VisitPre"
+			Ttl[1] = "Fandango Use"
+			Amg[1] = "All"
+			Var[1] = RemCom(QRE[1])
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+				
+			QRE[1] = "PostInt"
+			Ttl[1] = "Post-Interest"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+
+			QRE[1] = "IntensA"
+			Ttl[1] = "How Likely to Watch Opening Weekend"
+			Amg[1] = "Top 2 Box Interest"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+
+			QRE[1] = "IntensB"
+			Ttl[1] = "Release Date Impact"
+			Amg[1] = "Somewhat Likely to See Opening Weekend"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+
+			QRE[1] = "Share, ShareCat"
+			Ttl[1] = "How Share"
+			Amg[1] = "All"
+			Var[1] = RemCom(QRE[1])
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "WhoWith"
+			Ttl[1] = "Who Would See Movie With"
+			Amg[1] = "Top 2 Box Interest"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "GenFor"
+			Ttl[1] = "Gender Association"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+
+			ListNum = 7
+
+			QRE[1] = "FutureActions"
+			Ttl[1] = "Online Actions"
+			Amg[1] = "All"
+			Var[1] = ListVars(QRE[1], ListNum)
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+				
+Banner = Banner2
+
+			QRE[1] = "ShowAware"
+			Ttl[1] = "Show Awareness"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "ShowReg"
+			Ttl[1] = "Shows Watched Regularly"
+'			Amg[1] = "Aware of 1+ Show"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner6, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+'				HISPANICS
+			Ttl[1] = "Shows Watched Regularly"
+			Amg[1] = "Hispanics & Aware of 1+ Show"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner6, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 1, "Rac1.ContainsAny({Hispanic_Latino})")
+'				AA
+			Amg[1] = "AA & Aware of 1+ Show"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner6, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 1, "Rac1.ContainsAny({Black_African_American})")
+				
+			BoxListNum = 3
+			
+			QRE[1] = "ShowHowWatch"
+			Ttl[1] = "How Watch Shows"
+			Amg[1] = "Regular Viewers"
+			Var[1] = ListVarsN(QRE[1], 1, 100) + " + " + ListVarsN(QRE[1], 102, 191)
+				MakeTab(var[1], Banner6, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+			Ttl[2] = Ttl[1] + " (By Box)"
+			Var[1] = ListVarsByBox(QRE[1], BoxListNum)
+				MakeTab(var[1], Banner6, Amg[1], QRE[1], Ttl[2], TableDoc, 1, "first", 0, "None")
+			Ttl[2] = Ttl[1] + " (Grid)"
+'			GridBanner = QRE[1]
+'			Var[1] = QRE[1] + "[..].Column"
+'				MakeTab(var[1], GridBanner, Amg[1], QRE[1], Ttl[2], TableDoc, 1, "first", 0, "None")		
+			GridBanner = QRE[1]
+'			Ttl[1] = Ttl[1] + " Grid"
+				if C = 1 then
+					MakeTab(GridBanner, "Post1{'Overall' base('Overall=1'), Definite} > " + QRE[1] + "[..].Column", Amg[1], QRE[1], Ttl[2], TableDoc, 0, GetGridSort(GridBanner,C,QRE[1],1), 0, Null)
+					.Tables[TableDoc.Tables.Count-1].CellItems.Clear()
+					.Tables[TableDoc.Tables.Count-1].CellItems.AddNew(2,2)
+				end if	
+				if C = 2 then
+					MakeTab("ShowHowWatch > Post1{'Overall' base('Overall=1') [IsHidden=True], Definite} As post1", QRE[1] + "[..].Column", "Watches Regularly & Definite Interest in The Mummy", QRE[1], Ttl[2], TableDoc, 0, GetGridSort(GridBanner,C,QRE[1],1), 0, Null)
+				end if	
+'				DEFINITE INTEREST
+			Amg[1] = "Regular Viewers & Definite Interest"
+			Var[1] = ListVars(QRE[1], ListNum)
+				MakeTab(var[1], Banner6, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 1, "PostInt.ContainsAny({Definitely_interested})")
+			Ttl[2] = Ttl[1] + " (By Box)"
+			Var[1] = ListVarsByBox(QRE[1], BoxListNum)
+				MakeTab(var[1], Banner6, Amg[1], QRE[1], Ttl[2], TableDoc, 1, "first", 1, "PostInt.ContainsAny({Definitely_interested})")
+
+			ListNum = 6
+
+			QRE[1] = "WatchTVB, WatchTVGen"
+			Ttl[1] = "How Typically Watch TV"
+			Amg[1] = "All"
+			Var[1] = "WatchTVB + " + ListVars("WatchTVGen", ListNum)
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "GenMov"
+			Ttl[1] = "Movie Genre Feelings"
+			Amg[1] = "All"
+			Var[1] = ListVars("GenMov", 7)
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+				
+			QRE[1] = "GenTV"
+			Ttl[1] = "TV Genre Feelings"
+			Amg[1] = "All"
+			Var[1] = ListVars("GenTV", 12)
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+
+			QRE[1] = "ViewSport"
+			Ttl[1] = "Regularly Watched Sports"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "ViewEvent"
+			Ttl[1] = "Regularly Watched TV Events"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+'				HISPANICS
+			Amg[1] = "Hispanics"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 1, "Rac1.ContainsAny({Hispanic_Latino})")
+'				AA
+			Amg[1] = "AA"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 1, "Rac1.ContainsAny({Black_African_American})")
+
+				
+			ListNum = 43
+			
+			QRE[1] = "ViewCab"
+			Ttl[1] = "How Often Watch Channels"
+			Amg[1] = "All"
+			Var[1] = ListVars(QRE[1], ListNum)
+				MakeTab(var[1], Banner7, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+			Ttl[2] = Ttl[1] + " (Top Box, Top 2 Box)"
+			Var[1] = QRE[1] + "_TB" + " + " + QRE[1] + "_T2B"
+				MakeTab(var[1], Banner7, Amg[1], QRE[1], Ttl[2], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "CableB"
+			Ttl[1] = "Premium Cable Subscriptions"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "TVWatchWhen"
+			Ttl[1] = "When Watch TV"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+
+			ListNum = 5
+			
+			QRE[1] = "SocialVisit"
+			Ttl[1] = "Social Media Use"
+			Amg[1] = "All"
+			Var[1] = ListVars(QRE[1], ListNum)
+'			Banner2 = "Overall + Post1 + GenderG + Age2 + AgegenBan + QuadDef + Age4 + GenAge + Race1 + RaceD + MovGen + MarStatBan + MovActBanD + Sharebeh + Region + TheatView + TheatViewInsid + Franchise + Education"
+				MakeTab(var[1], Banner2, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+			Ttl[2] = Ttl[1] + " (Top Box, Top 2 Box)"
+			Var[1] = QRE[1] + "_TB" + " + " + QRE[1] + "_T2B" + " + " + QRE[1] + "_T3B"
+				MakeTab(var[1], Banner2, Amg[1], QRE[1], Ttl[2], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "Instagram, Snapchat"
+			Ttl[1] = "Instagram/Snapchat Stories"
+			Amg[1] = "Visit Instagram/Snapchat At Least Once a Day"
+			Var[1] = RemCom(QRE[1])
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+'
+'			QRE[1] = "Snapchat"
+'			Ttl[1] = "Types of Stories Watched on Snapchat"
+'			Amg[1] = "Visit Snapchat At Least Once a Day"
+'			Var[1] = QRE[1]
+'				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "Channel"
+			Ttl[1] = "Online Channel Genres"
+			Amg[1] = "All"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+				
+			QRE[1] = "MaxDiff"
+			Ttl[1] = "MaxDiff Scores"
+			Var[1] = "MaxDiff"
+			Amg[1] = "All"
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+
+			QRE[1] = "Kind"
+			Ttl[1] = "Genre Association"
+			Amg[1] = "All"
+			Var[1] = QRE[1] + " 'Do you think INSIDIOUS 4 is mainly a(n)...?'"
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+				
+			ListNum = 9
+			
+			QRE[1] = "Seen"
+			Ttl[1] = "Seen"
+			Amg[1] = "All"
+			Var[1] = ListVars(QRE[1], ListNum)
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+			Ttl[2] = Ttl[1] + " (Top Box, Top 2 Box)"
+			Var[1] = QRE[1] + "_TB" + " + " + QRE[1] + "_T2B"
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[2], TableDoc, 1, "first", 0, "None")
+
+			QRE[1] = "InsidA"
+			Ttl[1] = "Insidious Movies Comparison"
+			Amg[1] = "Seen 1+ Insidious Movie"
+			Var[1] = QRE[1]
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			ListNum = 14
+			
+			QRE[1] = "FranFan"
+			Ttl[1] = "Franchise Fanship"
+			Amg[1] = "All"
+			Var[1] = ListVars(QRE[1], ListNum)
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+			Ttl[2] = Ttl[1] + " (Top Box, Top 2 Box)"
+			Var[1] = QRE[1] + "_TB" + " + " + QRE[1] + "_T2B"
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[2], TableDoc, 1, "first", 0, "None")
+
+
+				
+	End If			
+	
+			If Screener = 0 then QRE[1] = "LangTV, LangWeb, LangDream, LangH, Parent, Rac1, HispAcc, AgeGenQuota, Job, PoliticsA, Inc, MarStat, Live"
+			If Screener = 1 then QRE[1] = "LangTV, LangWeb, LangDream, LangH, Parent, Rac1, HispAcc, AgeGenQuota"
+			Ttl[1] = "Demographics"
+			Amg[1] = "All"
+			Var[1] = RemCom(QRE[1])
+				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
+				
+			
+			'----------------------------
+			'Coded Opens
+			'----------------------------
+			
+			OEList[1]= "OEInstagramr_Code"
+			OEList[2]= "OESnapchatr_Code"
+			OEList[3]= "OEYoutuber_Code"
+	
+			
+			for i = 1 to 3
+				QRE[1] = OEList[i]
+				Ttl[1] = "Coded Open - " + OEList[i]
+				Var[1] = OEList[i] + "_Code"
+					If Screener = 0 then MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+			next
+	
+			
+				
+	end if
+				
+'TABLEAU TABS 
+if s = 2 then
+Banner = Banner2
+
+QRE[1] = "Regular Viewers"
+Ttl[1] = "Regular Viewers Tableau"
+Var[1] = "ShowReg"
+Amg[1] = "All"
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, SortCol, 0, "None")
+
+QRE[1] = "ViewCab"
+Ttl[1] = "Networks Watched (Top & Top 2 Box) Tableau"
+Amg[1] = "All"
+Var[1] = "ViewCab_TB"
+	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, SortCol, 0, "None")
+
+'QRE[1] = "Websites"
+'Ttl[1] = "Digital Tableau"
+'Amg[1] = "All"
+'Var[1] = "Websites{base('Overall=1'),..}"
+'	'MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, SortCol, 0, "None")
+'
+'QRE[1] = "Websites2"
+'Ttl[1] = "Digital Tableau"
+'Amg[1] = "All"
+'Var[1] = "Websites2_T2B{base('Overall=1'),..}"
+''	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, SortCol, 0, "None")
+	
+'QRE[1] = "ShowNew"
+'Ttl[1] = "Upcoming Show Likely to Watch"
+'Var[1] = "ShowNew"
+'Amg[1] = "All"
+'	MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, SortCol, 0, "None")
+	
+		
 
 	
-	Set MyVariable = MDM.CreateVariable(NameNew, Label)
-    MyVariable.MinValue = 1
-    MyVariable.DataType = mr.Categorical
 	
-	For Each cat In MDM.Fields[Grid].Elements
-		MyVariable.Elements.Add(MDM.CreateElement(cat.Name, cat.Label))
+end if	
+
+			'----------------------------
+			'Weights
+			'----------------------------	
+			For we = 0 to TableDoc.Tables.Count-1
+				TableDoc.Tables[we].weight = WgtVar
+			next
+			
+				
+		End With
+		
+		'----------------------------
+		'Populate the Tables
+		'----------------------------
+	  	TableDoc.Populate()
+	
+		'----------------------------
+		'Save the tables document
+		'----------------------------
+	  	TableDoc.Save(Project + " " + Sample[S] + " " + Cntry[C] + " V1.mtd")
+		
+		'----------------------------
+		'Export the tables 
+		'----------------------------
+		If Screener = 0 then EXPORT_FILE = myPath + "Tabs\Tab Prep\Exports\Export " + Sample[S] + " " + Cntry[C] + ".xlsx"
+		If Screener = 1 then EXPORT_FILE = myPath + "Tabs\Tab Prep\Exports\Export " + Sample[S] + " " + Cntry[C] + " Screener.xlsx"
+	
+		With TableDoc
+				With .Exports["VergeExcelExport"]
+					.Properties["DisplayAnnotations"] = True
+					.Properties["FileFormat"] = "Excel 2007"
+					.Properties["Interactive"] = False
+					.Properties["LaunchApplication"] = False
+					.Properties["OverwriteOutput"] = True
+					.Properties["ElementLabels"] = True
+					.Properties["VariableLabels"] = True
+					.Properties["Destination"] = EXPORT_FILE
+					.Properties["ShowHeadings"] = True
+					.Properties["TableOfContents"] = False
+					.Properties["FreezeFrames"] = False
+					.Properties["PageSetup.LeftMargin"] = 0.15
+					.Properties["PageSetup.RightMargin"] = 0.15
+					.Properties["PageSetup.TopMargin"] = 0.25
+					.Properties["PageSetup.BottomMargin"] = 0.25
+					.Properties["PageSetup.HeaderMargin"] = 0.25
+					.Properties["PageSetup.FooterMargin"] = 0.25
+					.Properties["PageSetup.Orientation"] = 2
+					.Properties["MinimumAnnotationWidth"] = 5
+					.Properties["TopElementWidth"] = 7.5
+					.Properties["SideElementWidth"] = 30
+					.Properties["Colors.VariableLabelCell"] = "#C5D9F1"
+					.Properties["Colors.SignificanceCell"] = "#006100"
+					.Properties["Colors.SignificanceText"] = "#C6EFCE"
+					.Export()
+				End With
+		End With
+		
+		
+	
+'	  With TableDoc.Exports["mrHtmlExport"]
+'	      .Properties["Interactive"] = False
+'	      .Properties["OverwriteOutput"] = True
+'	      .Properties["LaunchApplication"] = True
+'	      .Properties["DisplayOption"] = "Table Only"
+'	      .Properties["LayoutStyle"] = "Frame Table of Contents"
+'	      .Properties["PresentationStyle"] = "Black and White"
+'	      .Export(Project + Sample[S] + Cntry[C] +".htm")
+'	  End With 
+
 	Next
-	    
-	MDM.Fields.Add(MyVariable)
-	
-	txtfile.WriteLine("    ' " + Name)		
-	txtfile.WriteLine("    CreateGridSummary(" + Grid + ", " + NameNew + ", {" + cats + "}, ""Column"")")	
-	txtfile.WriteLine("")
-	
+Next
 	
 
-End Sub
 
-Sub NewGrid(TableDoc, fixbases, Name, Label, CLabel)
+'*******************************************'
+'	SubRoutines & Functions - DO NOT EDIT	'
+'*******************************************'
 
-	Dim i, VarList, k, NumNew, VarSpl, NameLen, Counter, VarLen, Suffix, StreamL
-	k = 1	
-	NameLen = Len(Name)
-	Counter = 0
-	StreamL = ""	
+Sub MakeTab (Side, Top, Amg, QRE, Titl, TableDoc, Sort, SortCol, Filter, FilterSpec)
+With TableDoc
+	.Tables.AddNew("Table" + CText(TableDoc.Tables.Count + 1),  Side + "*" + Top, Titl)
+	.Tables[TableDoc.Tables.Count-1].Annotations[2 ].Specification = "Among " + Amg
+	.Tables[TableDoc.Tables.Count-1].Annotations[4 	].Specification = QRE
 	
-	For each VarSpl in TableDoc.DataSet.Variables
 	
-		if Ucase(Left(VarSpl.Name, NameLen)) = UCase(Name) then 
-			VarLen = Len(VarSpl.Name)
-			
-			Suffix = Mid(VarSpl.Name, NameLen, VarLen)
-			
-			if Validate(Suffix, , , "\d") = TRUE or Validate(Suffix, , , "\d{2}") or Validate(Suffix, , , "\d{3}")= TRUE then
-				if Counter = 0 then VarList = Name + makestring(Suffix)
-				if Counter > 0 then VarList = VarList + "," + Name + makestring(Suffix)	
-				StreamL = StreamL + ", b" + makestring(Suffix) + "'Base' base('" + Name + makestring(Suffix) + " is not null') [isHidden=TRUE], " + Name + makestring(Suffix)		
-				Counter = Counter + 1	
-				
-			End If	
-			 
-		end if	
-	
-	next		
-	
-'	NumNew = Counter
-'	StreamL = ""	
-'	for i = k to NumNew
+'	if .Tables[TableDoc.Tables.Count-1].Axes[0].SubAxes.Count = 1 then
+'		.Tables[TableDoc.Tables.Count-1].Rules.AddNew(0 '! Hide !', 0 '! Row !', 0, 1 '! LessEqual !', 0)
+'	end if
 '	
-'		if i = k then VarList = Name + makestring(i)
-'		if i > k then VarList = VarList + "," + Name + makestring(i)	
-'		
-'		StreamL = StreamL + ", b" + makestring(i) + "'Base' base('" + Name + makestring(i) + " is not null') [isHidden=TRUE], " + Name + makestring(i)		
-'	next
+'	if Right(.Tables[TableDoc.Tables.Count-1].Description, 17) = "(Top & Top 2 Box)" then
+'		.Tables[TableDoc.Tables.Count-1].Rules.AddNew(0 '! Hide !', 0 '! Row !', 0, 1 '! LessEqual !', 0)
+'	end if
+'	
+'	
+'	if Right(.Tables[TableDoc.Tables.Count-1].Description, 8) = "(By Box)" then
+'		.Tables[TableDoc.Tables.Count-1].Rules.AddNew(0 '! Hide !', 0 '! Row !', 0, 1 '! LessEqual !', 0)
+'	end if
 	
-	TableDoc.DataSet.Variables.AddNewGrid(VarList, _
-											Name, _
-											Label, _
-											CLabel)   
-    
-    fixbases.WriteLine(Name + "_TB categorical axis(""{base() [IsHidden=TRUE]" + StreamL + "}"");")	
-	fixbases.WriteLine("")
+	If Sort = 1 then .Tables[TableDoc.Tables.Count-1].SortColumn = SortCol
+	If Filter = 1 then .Tables[TableDoc.Tables.Count-1].Filters.AddNew("Filter1" + CText(TableDoc.Tables.Count + 1), FilterSpec)	
 	
-
-End Sub
-
-Sub CreateTopBox_Old(MDM, txtfile, Name, Label, Grid, Type, Box)
-	Dim MyVariable
-	Dim cat, cats, cnt, BoxG
-	
-	Set MyVariable = MDM.CreateVariable(Name, Label)
-    MyVariable.MinValue = 1
-    MyVariable.DataType = mr.Categorical
-	
-	For Each cat In MDM.Fields[Grid].Elements
-		MyVariable.Elements.Add(MDM.CreateElement(cat.Name, cat.Label))
-	Next
-	    
-	MDM.Fields.Add(MyVariable)
-	
-	txtfile.WriteLine("    ' " + Name)	
-	if Type = "Top 2" then
-		For cnt = 0 To Box - 1
-			cats = cats + MDM.Fields[Grid].Fields["Column"].Categories[cnt].Name + ","
-		Next
-	end if
-	if Type = "Bot 2" then
-		BoxG = MDM.Fields[Grid].Fields["Column"].Categories.Count
-		For cnt = BoxG-Box To BoxG-2
-			cats = cats + MDM.Fields[Grid].Fields["Column"].Categories[cnt].Name + ","
-		Next
-	end if
-	if Type = "Single" then		
-		cats = cats + MDM.Fields[Grid].Fields["Column"].Categories[Box-1].Name + ","		
-	end if
-	
-	cats = Left(cats,Len(cats)-1)	
-	txtfile.WriteLine("    CreateGridSummary(" + Grid + ", " + Name + ", {" + cats + "}, ""Column"")")	
-	txtfile.WriteLine("")
+End With	
 
 End Sub
 
 
-Sub NewGrid_Old(TableDoc, Name, Label, Num, CLabel)
-
-	Dim i, VarList, k
-	k = 1
-		
-	for i = k to Num
-	
-		if i = k then VarList = Name + makestring(i)
-		if i > k then VarList = VarList + "," + Name + makestring(i)		
-		
+Function ListVars (VarName, Numb)
+Dim i
+	ListVars = ""
+	For i = 1 to Numb
+		if i = 1 then ListVars = VarName + makestring(i)
+		if i > 1 then ListVars = ListVars + " + " + VarName + makestring(i)
 	next
-	
-	TableDoc.DataSet.Variables.AddNewGrid(VarList, _
-											Name, _
-											Label, _
-											CLabel)
 
-End Sub
+End Function
+
+Function ListVarsByBox (VarName, Numb)
+Dim i
+      ListVarsByBox = ""
+      For i = 1 to Numb
+            if i = 1 then ListVarsByBox = VarName + "_TB"
+            if i > 1 then ListVarsByBox = ListVarsByBox + " + " + VarName + "_" + makestring(i) + "B"
+      next
+
+End Function
+
+Function ListVarsN (VarName, Numb1, Numb2)
+Dim i
+	ListVarsN = ""
+	For i = Numb1 to Numb2
+		if i = Numb1 then ListVarsN = VarName + makestring(i)
+		if i > Numb1 then ListVarsN = ListVarsN + " + " + VarName + makestring(i)
+	next
+
+End Function
+
+
+Function ListVarsX (VarName, Numb1, Numb2)
+Dim i
+	ListVarsX = ""
+	For i = Numb1 to Numb2
+		if i = Numb1 then ListVarsX = VarName + makestring(i)
+		if i > Numb1 then ListVarsX = ListVarsX + " + " + VarName + makestring(i)
+	next
+
+End Function
+
+Function ListVarsInt (VarName, Numb)
+Dim i
+	ListVarsInt = ""
+	For i = 1 to Numb
+		if i = 1 then ListVarsInt = VarName + makestring(i) + "{base(), 'Top 2 Box' net({Definitely_interested, Probably_interested}), Net1 'Bottom 2 Box' net({Probably_not_interested, Definitely_not_interested })}"
+		if i > 1 then ListVarsInt = ListVarsInt + " + " + VarName + makestring(i)+ "{base(), 'Top 2 Box' net({Definitely_interested, Probably_interested}), Net1 'Bottom 2 Box' net({Probably_not_interested, Definitely_not_interested })}"
+	next
+
+End Function
+
+
+
+Function ListVarsShare (VarName, Numb)
+Dim i
+      ListVarsShare = ""
+      For i = 1 to Numb
+            if i = 1 then ListVarsShare = VarName + makestring(i) + "{base(), eMean 'Mean' mean(" + Varname + makestring(i) + ") [Decimals=2], eMinimum 'Minimum' min(" + Varname + makestring(i) + ") [Decimals=2], eMaximum 'Maximum' max(" + Varname + makestring(i) + ") [Decimals=2], _0To19 '0 - 19' expression('" + Varname + makestring(i) + " >= 0 AND " + Varname + makestring(i) + " <= 19'), _20To39 '20 - 39' expression('" + Varname + makestring(i) + " >= 20 AND " + Varname + makestring(i) + " <= 39'), _40To59 '40 - 59' expression('" + Varname + makestring(i) + " >= 40 AND " + Varname + makestring(i) + " <= 59'), _60To79 '60 - 79' expression('" + Varname + makestring(i) + " >= 60 AND " + Varname + makestring(i) + " <= 79'), _80To100 '80 - 100' expression('" + Varname + makestring(i) + " >= 80 AND " + Varname + makestring(i) + " <= 100')}"
+            if i > 1 then ListVarsShare = ListVarsShare + " + " + VarName + makestring(i)+ "{base(), eMean 'Mean' mean(" + Varname + makestring(i) + ") [Decimals=2], eMinimum 'Minimum' min(" + Varname + makestring(i) + ") [Decimals=2], eMaximum 'Maximum' max(" + Varname + makestring(i) + ") [Decimals=2], _0To19 '0 - 19' expression('" + Varname + makestring(i) + " >= 0 AND " + Varname + makestring(i) + " <= 19'), _20To39 '20 - 39' expression('" + Varname + makestring(i) + " >= 20 AND " + Varname + makestring(i) + " <= 39'), _40To59 '40 - 59' expression('" + Varname + makestring(i) + " >= 40 AND " + Varname + makestring(i) + " <= 59'), _60To79 '60 - 79' expression('" + Varname + makestring(i) + " >= 60 AND " + Varname + makestring(i) + " <= 79'), _80To100 '80 - 100' expression('" + Varname + makestring(i) + " >= 80 AND " + Varname + makestring(i) + " <= 100')}"
+      next
+
+End Function
+
+Function RemCom (VarName)
+Dim i, sp,leng
+	RemCom = ""
+	sp = split(VarName,",")
+	leng = len(sp)
+	For i = 1 to leng
+		if i = 1 then RemCom = sp[i-1]
+		if i > 1 then RemCom = RemCom + " + " + sp[i-1]
+	next
+
+End Function
+
+Function RemComOv (VarName)
+Dim i, sp,leng
+	RemComOv = ""
+	sp = split(VarName,",")
+	leng = len(sp)
+	For i = 1 to leng
+		if i = 1 then RemComOv = sp[i-1] + "{Base('Overall=1'),..}"
+		if i > 1 then RemComOv = RemComOv + " + " + sp[i-1] + "{Base('Overall=1'),..}"
+	next
+
+End Function
+
+
+
+Function GetGridSort(QRE, C, Slice, SlNum)
+	if C = 0 then GetGridSort = "TerrGrid{Base} >" + QRE + "{" + Slice + makestring(SlNum) + "}"
+	if C > 0 then GetGridSort = QRE + "{" + Slice + makestring(SlNum) + "}"
+End Function	

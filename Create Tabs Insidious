@@ -35,8 +35,8 @@ Screener = 0
 '*******************************************'
 '	Country Numbers to Run					'
 '*******************************************'
-CStart   = 2
-CEnd	 = 2
+CStart   = 1
+CEnd	 = 1
 
 For C = CStart to CEnd
 
@@ -624,6 +624,28 @@ Banner = Banner2
 			Var[1] = RemCom(QRE[1])
 				MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 0, "first", 0, "None")
 				
+			
+			'----------------------------
+			'Coded Opens
+			'----------------------------
+			
+			OEList[1]= "OEInstagramr"
+			OEList[2]= "OESnapchatr"
+			OEList[3]= "OEYoutuber"
+			Banner = "Overall + Post1 + QCL_2 + QCL_5 + GenderG + Age2 + Agegenban + Age4 + GenAge + Race1 + RaceD + MovGen + Place + MarStatBan + RegionBan + TheatView + TheatViewInsid + Franchise + Education"
+			
+			for i = 1 to 3
+				QRE[1] = OEList[i]
+				Ttl[1] = "Coded Open - " + OEList[i]
+				Var[1] = OEList[i] + "_Code"
+					If Screener = 0 and i = 1 then MakeTab(var[1], Banner, "Visit Instagram at Least Monthly", QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+					If Screener = 0 and i = 2 then MakeTab(var[1], Banner, "Visit Snapchat at Least Monthly", QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+					If Screener = 0 and i = 3 then MakeTab(var[1], Banner, "Visit Youtube at Least Monthly", QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+
+			next
+	
+			
+				
 	end if
 				
 'TABLEAU TABS 
@@ -665,24 +687,7 @@ Var[1] = "ViewCab_TB"
 	
 	
 end if	
-			
-			'----------------------------
-			'Coded Opens
-			'----------------------------
-			
-			OEList[1]= "OEInstagramr_Code"
-			OEList[2]= "OESnapchatr_Code"
-			OEList[3]= "OEYoutuber_Code"
-	
-			
-			for i = 1 to 3
-				QRE[1] = OEList[i]
-				Ttl[1] = "Coded Open - " + OEList[i]
-				Var[1] = OEList[i] + "_Code"
-					MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
-			next
-	
-			
+
 			'----------------------------
 			'Weights
 			'----------------------------	

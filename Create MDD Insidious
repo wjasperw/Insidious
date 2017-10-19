@@ -121,6 +121,7 @@ Education  categorical axis("{base() [IsHidden=True], ..}");
 QCL_2 categorical axis("{base() [IsHidden=True], Cluster_1 'Supernaturals', Cluster_4 'Empowered Elises', Cluster_2 'Insidious Fighters', Cluster_3 'Blum Fans'}");
 Avid2Cat "Movies Seen in Theater Past Year (Avid2)" categorical axis("{base() [IsHidden=True], e1 '3-16' expression('Avid2<17'), e2 '17+' expression('Avid2>16')}");
 
+QCL_5  categorical axis("{base() [IsHidden=True], ..}");
 '-----------------------------------------------------
 'Fix Bases for Summary Variables
 '-----------------------------------------------------
@@ -175,6 +176,10 @@ TicketB categorical axis("{base(), After_arriving_at_the_movie_theater [IsFixed=
 Aware categorical axis("{base(), .., none_of_these [isfixed=true]}");
 Instagram categorical axis("{base(), .., I_do_not_watch_any_of_the_above [isfixed=true]}");
 Snapchat categorical axis("{base(), .., I_do_not_watch_any_of_the_above [isfixed=true]}");
+
+OEInstagramr_Code categorical axis("{base(), .., Don’t_know_IDK_Not_sure_Dont_know [IsFixed=True]}");
+OESnapchatr_Code categorical axis("{base(), .., Don’t_know_IDK [IsFixed=True]}");
+OEYoutuber_Code categorical axis("{base(), .., Don’t_know_Dont_know_IDK [IsFixed=True]}");
 
 
 'YouTube categorical axis("{base(), .., none_of_these [isfixed=true]}");

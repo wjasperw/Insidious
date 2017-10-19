@@ -35,8 +35,8 @@ Screener = 0
 '*******************************************'
 '	Country Numbers to Run					'
 '*******************************************'
-CStart   = 1
-CEnd	 = 1
+CStart   = 2
+CEnd	 = 2
 
 For C = CStart to CEnd
 
@@ -128,23 +128,23 @@ For C = CStart to CEnd
 		'---------------
 		
 
-		if Screener = 0 then AxisTop.Specification = "Overall + Post1 + QCL_2 + GenderG + Age2 + Agegenban + Age4 + GenAge + Race1 + RaceD + MovGen + Place + MarStatBan + RegionBan + TheatView + TheatViewInsid + Franchise + Education"
-		if Screener = 1 then AxisTop.Specification = "Overall + GenderG + Age2 + Agegenban + + Age4 + GenAge + Race1 + RegionBan + Education + QCL_2"
+		if Screener = 0 then AxisTop.Specification = "Overall + Post1 + QCL_2 + QCL_5 + GenderG + Age2 + Agegenban + Age4 + GenAge + Race1 + RaceD + MovGen + Place + MarStatBan + RegionBan + TheatView + TheatViewInsid + Franchise + Education"
+		if Screener = 1 then AxisTop.Specification = "Overall + GenderG + Age2 + Agegenban + + Age4 + GenAge + Race1 + RegionBan + Education + QCL_2 + QCL_5"
 			
 		Dim Banner2
 		
-		if  C = 1 AND S <> 2 then Banner2 =  "Overall + Post1 + QCL_2"
-		if  C = 2 AND S <> 2 then Banner2 =  "Post1 + QCL_2"
-		if  C = 1 AND S = 2 then Banner2 =  "Overall + Post1{base() [isHidden = TRUE], Definite} + QCL_2"
-		if  C = 2 AND S = 2 then Banner2 =  "Post1{base() [isHidden = TRUE], Definite} + QCL_2" 
+		if  C = 1 AND S <> 2 then Banner2 =  "Overall + Post1 + QCL_2 + QCL_5"
+		if  C = 2 AND S <> 2 then Banner2 =  "Post1 + QCL_2 + QCL_5"
+		if  C = 1 AND S = 2 then Banner2 =  "Overall + Post1{base() [isHidden = TRUE], Definite} + QCL_2 + QCL_5"
+		if  C = 2 AND S = 2 then Banner2 =  "Post1{base() [isHidden = TRUE], Definite} + QCL_2 + QCL_5" 
 	
 		Dim Banner6		
-	    If  C = 1 then Banner6 =  "Overall + Post1 + QCL_2 + ShareBeh + RaceD + MovActBanD"
-		If  C = 2 then Banner6 =  "Post1 + QCL_2 + ShareBeh + RaceD + MovActBanD"		
+	    If  C = 1 then Banner6 =  "Overall + Post1 + QCL_2 + QCL_5 + ShareBeh + RaceD + MovActBanD"
+		If  C = 2 then Banner6 =  "Post1 + QCL_2 + QCL_5 + ShareBeh + RaceD + MovActBanD"		
 			
 		Dim Banner7		
-		if  C = 1 then Banner7 =  "Overall + Post1 + QCL_2 + RaceD + MovActBanD"
-		if  C = 2 then Banner7 =  "Post1 + QCL_2 + RaceD + MovActBanD"
+		if  C = 1 then Banner7 =  "Overall + Post1 + QCL_2 + QCL_5 + RaceD + MovActBanD"
+		if  C = 2 then Banner7 =  "Post1 + QCL_2 + QCL_5 + RaceD + MovActBanD"
 		
 				
 		'-----------------------------------------
@@ -169,7 +169,7 @@ For C = CStart to CEnd
 		if C = 1 then SortCol = "first"
 		if C = 2 then SortCol = "Post1{Definite}"
 
-		WgtVar = "weight"	
+		WgtVar = "weightPostInt"	
 		
 		With TableDoc
 	
@@ -670,17 +670,17 @@ end if
 			'Coded Opens
 			'----------------------------
 			
-			'OEList[1]= "OEHowWatch"
-			'OEList[2]= "OEWhyInt"
-			'OEList[3]= "OEUnique"
+			OEList[1]= "OEInstagramr_Code"
+			OEList[2]= "OESnapchatr_Code"
+			OEList[3]= "OEYoutuber_Code"
 	
 			
-			'for i = 1 to 3
-			'	QRE[1] = OEList[i]
-			'	Ttl[1] = "Coded Open - " + OEList[i]
-			'	Var[1] = OEList[i] + "_Code"
-			'		MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
-			'next
+			for i = 1 to 3
+				QRE[1] = OEList[i]
+				Ttl[1] = "Coded Open - " + OEList[i]
+				Var[1] = OEList[i] + "_Code"
+					MakeTab(var[1], Banner, Amg[1], QRE[1], Ttl[1], TableDoc, 1, "first", 0, "None")
+			next
 	
 			
 			'----------------------------

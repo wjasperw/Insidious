@@ -1,0 +1,328 @@
+GET 
+  FILE='K:\Insidious Chapter 4\MC Profile\Data\Prep\Ugam\MP_INSIDIOUS_4_US_GEN_FINAL_10_16_2017.sav'. 
+DATASET NAME DataSet1 WINDOW=FRONT.
+
+Define MRSET (Var1=!Tokens(1)
+/Lab=!CharEnd('/')
+/Num=!Tokens(1))
+MRSETS  /MDGROUP NAME=!concat($, !Var1) LABEL=!Lab CATEGORYLABELS=VARLABELS VARIABLES=!concat(!Var1, .1) to !concat(!Var1, ., !Num) VALUE=1 /DISPLAY NAME=[!concat($, !Var1)].
+!EndDefine.
+
+Var Label ViewSport.10 "(MLB) Baseball".
+
+*******************************************************************
+******************* BANNER  ***************************
+*******************************************************************.
+
+Freq Overall to Education.
+Rename Variables State=StateString.
+Rename Variables State_dupe1=State.
+
+Compute RegionBan = 0.
+IF (State = 7 OR State = 20 OR State = 22 OR State = 31 OR State = 32 OR State = 35 OR State = 39 OR State = 40 OR State = 47) RegionBan = 1.
+IF (State = 2  OR State = 4 OR State = 8  OR State = 9 OR State = 10 OR State = 11 OR State = 18 OR State = 21  OR State = 26 OR State = 28 OR State = 41 OR State = 43 OR State = 46 OR State = 50 OR State = 19 OR State = 37 OR State = 44) RegionBan = 2.
+IF (State = 13 OR State = 15 OR State = 16 OR State = 17 OR State = 23 OR State = 24 OR State = 25 OR State = 29 OR State = 30 OR State = 36 OR State = 42 OR State = 49) RegionBan = 3.
+IF (State = 1 OR State = 3 OR State = 5 OR State = 6 OR State = 12 OR State = 14 OR State = 27 OR State = 33 OR State = 34 OR State = 38 OR State = 45 OR State = 48 OR State = 51) RegionBan = 4.
+var label RegionBan "RegionBan".
+val label RegionBan
+1 "NE"
+2 "S"
+3 "MW"
+4 "W".
+Cross State by RegionBan.
+
+***********************************************************************************************************
+******************* Data Fixes - UGAM should fix these in next dataset ***************************
+***********************************************************************************************************.
+
+Rename Variables (SocialVisit.1 to SocialVisit.5=SocialVisit1 to SocialVisit5).
+Rename Variables (ShowHowWatch.1 to ShowHowWatch.100=ShowHowWatch1 to ShowHowWatch100).
+Rename Variables (ShowHowWatch.102 to ShowHowWatch.191=ShowHowWatch101 to ShowHowWatch190).
+
+
+MRSETS  /DELETE NAME=[$Seen].
+MRSET var1=Seen1 Lab="Get Out (2017)"/ Num=4.
+MRSET var1=Seen2 Lab="Split (2016)"/ Num=4.
+MRSET var1=Seen3 Lab="Don?t Breathe (2016)"/ Num=4.
+MRSET var1=Seen4 Lab="The Conjuring 2 (2016)"/ Num=4.
+MRSET var1=Seen5 Lab="Lights Out (2016)"/ Num=4.
+MRSET var1=Seen6 Lab="Ouija: Origin of Evil (2016)"/ Num=4.
+MRSET var1=Seen7 Lab="Insidious (2010)"/ Num=4.
+MRSET var1=Seen8 Lab="Insidious: Chapter 2 (2013)"/ Num=4.
+MRSET var1=Seen9 Lab="Insidious: Chapter 3 (2015)"/ Num=4.
+
+*******************************************************************
+******************* FOR WEIGHTING ***************************
+*******************************************************************.
+
+Freq AgeGenQuota.
+
+Compute WtRac=$sysmis.
+If (Rac1=1) WtRac= Agegenban.
+If (Rac1=3) WtRac= Agegenban+100.
+If (Rac1=2) WtRac= Agegenban+200.
+If (Rac1>3) WtRac= Agegenban+300.
+exe.
+
+
+val label wtrac 1 "White Male <25"
+2 "White Male  25+"
+3 "White Female <25"
+4 "White Female 25+"
+101 "Hisp Male <25"
+102 "Hisp Male  25+"
+103 "Hisp Female <25"
+104 "Hisp Female 25+"
+201 "AA Male <25"
+202 "AA Male  25+"
+203 "AA Female <25"
+204 "AA Female 25+"
+301 "Other Male <25"
+302 "Other Male  25+"
+303 "Other Female <25"
+304 "Other Female 25+"
+.
+
+freq WtRac.
+
+Compute Male20AvidWt = 2.
+IF(GenAge=1 and Avid2<=16) Male20AvidWt=1.
+Val Label Male20AvidWt 1 "Male < 20 Avid2<17"
+2 "Others".
+
+Compute MaleAvidWt = 2.
+IF(GenderG=1 and Avid2<=16) MaleAvidWt=1.
+Val Label MaleAvidWt 1 "Male Avid2<17"
+2 "Others".
+
+Compute Male20HorrorWt = 2.
+IF(GenAge=1 and GenMov7=1) Male20HorrorWt=1.
+Val Label Male20HorrorWt 1 "Male < 20 HorrorFan"
+2 "Others".
+
+
+Compute MaleHorrorWt = 2.
+IF(GenderG=1 and GenMov7=1) MaleHorrorWt=1.
+Val Label MaleHorrorWt 1 "Male HorrorFan"
+2 "Others".
+
+Freq Male20AvidWt to MaleHorrorWt.
+
+Numeric WeightMale20Hor (F9.8).
+Numeric WeightMaleHor  (F9.8).
+
+Numeric WeightMale20Avid (F9.8).
+Numeric WeightMaleAvid  (F9.8).
+
+Compute PostIntWt=3.
+IF(Postint=1 and GenderG=1) PostIntWt=1.
+IF(Postint=1 and GenderG=2) PostIntWt=2.
+Val Label PostIntWt 1 "Male Definite" 2 "Female Definite" 3 Others.
+Freq PostIntWt.
+Numeric WeightPostInt (F9.8).
+
+
+SAVE OUTFILE='K:\Insidious Chapter 4\MC Profile\Data\Insidious 4 Gen US.sav'
+  /COMPRESSED.
+
+
+
+*******************************************************************
+************************ WEIGHT TEST ************************
+*******************************************************************.
+use all.
+Weight by weight.
+
+freq Rac1 wtrac gender regionban agegenban genage.
+Cross rac1 by agegenban / cells=column
+
+
+ * COMPUTE weight = weight*(1500/1501).
+ * exe.
+
+*******************************************************************
+************************ MAXDIFF *****************************
+*******************************************************************.
+
+ * GET DATA /TYPE=XLSX 
+  /FILE='M:\FIFTY SHADES DARKER\MC Profile\Data\Prep\MaxDiff\MD_scores_hb_report.xlsx' 
+  /SHEET=name 'Rescaled Scores' 
+  /CELLRANGE=full 
+  /READNAMES=on 
+  /ASSUMEDSTRWIDTH=32767. 
+
+GET DATA /TYPE=XLSX 
+  /FILE='M:\Half To Death\MC Profile\Data\Prep\MaxDiff\MD_scores_hb_report.xlsx' 
+  /SHEET=name 'Rescaled Scores' 
+  /CELLRANGE=full 
+  /READNAMES=on 
+  /ASSUMEDSTRWIDTH=32767. 
+EXECUTE.
+
+DATASET NAME DataSet4 WINDOW=FRONT.
+
+
+
+  Rename Variables (InternalInterviewNumbers=Record).
+  Alter Type Record (F7.0).
+  Sort Cases by Record(A).
+
+
+ DATASET ACTIVATE DataSet1.
+ Sort Cases by Record(A).
+  MATCH FILES /FILE=*
+  /FILE='DataSet4'
+  /BY Record.
+  EXECUTE.
+
+ Rename Variables (VAR00002 to VAR00008=Rescaled1
+Rescaled2
+Rescaled3
+Rescaled4
+Rescaled5
+Rescaled6
+Rescaled7
+).
+Formats Rescaled1 To Rescaled7 (F9.8).
+
+var labels Rescaled1 "PEDIGREE".
+var labels Rescaled2 "HERHOUSE".
+var labels Rescaled3 "ENDOFFRANCHISE".
+var labels Rescaled4 "HORROR".
+var labels Rescaled5 "EVIL".
+var labels Rescaled6 "GIFT".
+var labels Rescaled7 "FINALBATTLE".
+
+
+
+
+
+
+*******************************************************************
+******************** SPECIAL REQUESTS*********************
+*******************************************************************.
+
+ * IF (Gender = 1 AND PostInt1 = 1) GenderDef=1.
+ * IF (Gender = 2 AND PostInt1 = 1) GenderDef=2.
+ * exe.
+
+ * Var label GenderDef "Gender By Definites".
+
+ * val label GenderDef 1 "Male Definites" 2 "Female Definites".
+
+ * If (RaceD.3=1) RaceD_AA=1 .
+
+ * Var label RaceD_AA "AA".
+
+ * freq RaceD_AA RaceD.3.
+ * Val label RaceD_AA 1 "AA"
+
+
+ * freq rac1.
+
+ * Numeric WeightAA (F9.8).
+
+*******************************************************************
+******************** CLUSTER ANALYSIS*********************
+*******************************************************************.
+
+Compute QCL_1 = 0. 
+val label QCL_1 1  'Cluster 1'.
+EXECUTE.
+
+USE ALL.
+COMPUTE filter_$=(POSTINT = 1).
+
+FILTER BY filter_$.
+EXECUTE.
+
+weight by weightPostInt.
+freq PostInt .
+
+
+QUICK CLUSTER Rescaled1 Rescaled2 Rescaled3 Rescaled4 Rescaled5 Rescaled6 Rescaled7
+  /MISSING=LISTWISE 
+  /CRITERIA=CLUSTER(3) MXITER(10) CONVERGE(0)
+  /METHOD=KMEANS(NOUPDATE)
+  /SAVE CLUSTER
+  /PRINT INITIAL.
+
+
+QUICK CLUSTER Rescaled1 Rescaled2 Rescaled3 Rescaled4 Rescaled5 Rescaled6 Rescaled7
+  /MISSING=LISTWISE
+  /CRITERIA=CLUSTER(4) MXITER(10) CONVERGE(0)
+  /METHOD=KMEANS(NOUPDATE)
+  /SAVE CLUSTER
+  /PRINT INITIAL.
+
+
+QUICK CLUSTER Rescaled1 Rescaled2 Rescaled3 Rescaled4 Rescaled5 Rescaled6 Rescaled7
+  /MISSING=LISTWISE 
+  /CRITERIA=CLUSTER(2) MXITER(10) CONVERGE(0)
+  /METHOD=KMEANS(NOUPDATE)
+  /SAVE CLUSTER
+  /PRINT INITIAL.
+
+
+var labels QCL_1 "3- Segments".
+var labels QCL_2 "4- Segments".
+var labels QCL_3 "2- Segments".
+EXECUTE.
+
+freq QCL_1.
+
+RECODE QCL_1  (3=1)  (2=3)  (1=2).
+exe.
+
+val label QCL_1 1 "Cluster 3"
+2 "Cluster 1"
+3 "Cluster 2".
+exe.
+
+freq QCL_2.
+
+
+RECODE QCL_2 (1=1) (4=2) (2=3) (3=4).
+EXECUTE.
+
+val label QCL_2 1 "Cluster 1"
+2 "Cluster 4"
+3 "Cluster 2"
+4 "Cluster 3".
+
+ * Var label QCL_1 "Clusters (Among Female Definite)".
+
+ * Var label QCL_4 "3-Segments (Among Female)".
+
+freq QCL_2.
+
+IF (Gender = 1 AND PostInt = 1) GenderDef=1.
+IF (Gender = 2 AND PostInt = 1) GenderDef=2.
+exe.
+
+Var label GenderDef "Gender By Definites".
+
+val label GenderDef 1 "Male Definites" 2 "Female Definites".
+
+freq GenderDef.
+
+*?	Cluster 1: Supernaturals
+?	Cluster 4: Empowered Elises
+?	Cluster 3: Blum Buffs
+?	Cluster 2: Insidious Fighters
+
+Recode QCL_5(1=1)(4=2)(3=3)(2=4).
+Val Labels QCL_5 1 Supernaturals	
+2 Empowered Elises
+3 Blum Buffs	
+4 Insidious Fighters	
+.
+Freq QCL_5.
+Var Label QCL_5 "New 4-Segments".
+rename variables record = Respondent_Serial.
+
+
+SAVE OUTFILE='K:\Insidious Chapter 4\MC Profile\Data\Insidious 4 Gen US.sav'
+  /COMPRESSED.
+
+
